@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Match Tracker</title>
+    <style>
+        body {
+            background-color: #000000; /* Pure black for S26 AMOLED */
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 { text-align: center; color: #f39c12; }
+        .match-card {
+            background-color: #1a1a1a;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border-left: 4px solid #f39c12;
+        }
+        .league { color: #aaaaaa; font-size: 0.85em; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .teams { font-size: 1.2em; font-weight: bold; margin-bottom: 8px; }
+        .time { color: #4CAF50; font-weight: bold; font-size: 0.9em; }
+        .note { font-size: 0.8em; color: #777; text-align: center; margin-top: 30px; }
+    </style>
+</head>
+<body>
+
+    <h2>🏆 Live Match Tracker</h2>
+    <div id="tracker-container"></div>
+    <p class="note">Note: Real-time live score automation requires a paid API (like Sportmonks). For now, you can edit this file to update upcoming fixtures.</p>
+
+    <script>
+        // Your custom watchlist
+        const matches = [
+            { league: "Trendyol Süper Lig", teams: "Fenerbahçe vs Galatasaray", time: "Upcoming", category: "fb-foot" },
+            { league: "EuroLeague", teams: "Fenerbahçe Beko vs Real Madrid", time: "Upcoming", category: "fb-basket" },
+            { league: "UEFA Champions League", teams: "Matchday 3 Fixtures", time: "Today", category: "ucl" },
+            { league: "UEFA Europa League", teams: "Beşiktaş vs Crystal Palace", time: "Tomorrow", category: "bjk-euro" },
+            { league: "UEFA Nations League", teams: "Türkiye vs Wales", time: "Upcoming", category: "national" }
+        ];
+
+        const container = document.getElementById('tracker-container');
+        
+        matches.forEach(match => {
+            const card = document.createElement('div');
+            card.className = 'match-card';
+            card.innerHTML = `
+                <div class="league">${match.league}</div>
+                <div class="teams">${match.teams}</div>
+                <div class="time">🕒 ${match.time}</div>
+            `;
+            container.appendChild(card);
+        });
+    </script>
+
+</body>
+</html>
