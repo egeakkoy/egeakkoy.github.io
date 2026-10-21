@@ -1,60 +1,664 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Match Tracker</title>
-    <style>
-        body {
-            background-color: #000000; /* Pure black for S26 AMOLED */
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-        }
-        h2 { text-align: center; color: #f39c12; }
-        .match-card {
-            background-color: #1a1a1a;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-            border-left: 4px solid #f39c12;
-        }
-        .league { color: #aaaaaa; font-size: 0.85em; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-        .teams { font-size: 1.2em; font-weight: bold; margin-bottom: 8px; }
-        .time { color: #4CAF50; font-weight: bold; font-size: 0.9em; }
-        .note { font-size: 0.8em; color: #777; text-align: center; margin-top: 30px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#000000" />
+  <title>Match Tracker</title>
+  <style>
+    :root {
+      --bg: #000000;
+      --card: #111318;
+      --card-border: #222630;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --accent: #f59e0b;
+      --fb-blue: #1d4ed8;
+      --fb-yellow: #facc15;
+      --ucl: #38bdf8;
+      --bjk: #e5e7eb;
+      --tur: #ef4444;
+      --green: #22c55e;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      padding: 0 0 80px 0;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(0, 0, 0, 0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 12px 16px;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .app-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .controls-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    select, .btn {
+      background: #181b22;
+      color: var(--text);
+      border: 1px solid #2e3440;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-accent {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+    .search-bar {
+      width: 100%;
+      background: #14171f;
+      border: 1px solid #262b36;
+      color: var(--text);
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      margin-bottom: 10px;
+      outline: none;
+    }
+    .search-bar:focus { border-color: var(--accent); }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      white-space: nowrap;
+      padding: 7px 13px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: #14171f;
+      color: var(--muted);
+      border: 1px solid #232834;
+      cursor: pointer;
+    }
+    .tab.active {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+    .sub-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px 4px 16px;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .toggle-past {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+    }
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 8px 16px;
+    }
+    .date-header {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin: 18px 0 8px 2px;
+    }
+    .match-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-left: 4px solid var(--accent);
+      border-radius: 12px;
+      padding: 13px 14px;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .match-card.cat-fb-foot { border-left-color: var(--fb-yellow); }
+    .match-card.cat-fb-basket { border-left-color: #3b82f6; }
+    .match-card.cat-ucl { border-left-color: var(--ucl); }
+    .match-card.cat-bjk { border-left-color: var(--bjk); }
+    .match-card.cat-tur { border-left-color: var(--tur); }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.74rem;
+      color: var(--muted);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #1c202b;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      color: #d1d5db;
+    }
+    .countdown {
+      font-weight: 700;
+      color: var(--green);
+      font-size: 0.75rem;
+    }
+    .countdown.live {
+      color: #ef4444;
+      animation: pulse 1.4s infinite;
+    }
+    .countdown.past { color: var(--muted); }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
+    }
+    .teams-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .teams-names {
+      font-size: 1.02rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+    .score-box {
+      background: #1d222e;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--fb-yellow);
+      white-space: nowrap;
+    }
+    .card-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      color: var(--muted);
+      border-top: 1px solid #1b1f2a;
+      padding-top: 8px;
+    }
+    .datetime-text {
+      color: #e5e7eb;
+      font-weight: 600;
+    }
+    .card-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .icon-btn {
+      background: #1b1f2a;
+      border: 1px solid #2a3040;
+      color: #d1d5db;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 0.73rem;
+      cursor: pointer;
+    }
+    /* Modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: #14171f;
+      border: 1px solid #2e3440;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 420px;
+      padding: 18px;
+    }
+    .modal h3 { margin: 0 0 12px 0; font-size: 1.05rem; }
+    .form-group { margin-bottom: 10px; }
+    .form-group label { display: block; font-size: 0.76rem; color: var(--muted); margin-bottom: 4px; }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 9px 10px;
+      background: #0d0f14;
+      border: 1px solid #2a3040;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.88rem;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+    }
+  </style>
 </head>
 <body>
 
-    <h2>🏆 Live Match Tracker</h2>
-    <div id="tracker-container"></div>
-    <p class="note">Note: Real-time live score automation requires a paid API (like Sportmonks). For now, you can edit this file to update upcoming fixtures.</p>
+  <header>
+    <div class="header-top">
+      <div class="app-title">🏆 Match Tracker</div>
+      <div class="controls-row">
+        <select id="tz-select" title="Timezone">
+          <option value="local">📍 Phone Time</option>
+          <option value="Europe/Istanbul">🇹🇷 TRT (UTC+3)</option>
+          <option value="Europe/Berlin">🇪🇺 CET/CEST</option>
+          <option value="UTC">🌐 UTC</option>
+        </select>
+        <button class="btn" id="sync-btn" onclick="syncLiveScores()">🔄 Live</button>
+        <button class="btn btn-accent" onclick="openModal()">+ Add</button>
+      </div>
+    </div>
 
-    <script>
-        // Your custom watchlist
-        const matches = [
-            { league: "Trendyol Süper Lig", teams: "Fenerbahçe vs Galatasaray", time: "Upcoming", category: "fb-foot" },
-            { league: "EuroLeague", teams: "Fenerbahçe Beko vs Real Madrid", time: "Upcoming", category: "fb-basket" },
-            { league: "UEFA Champions League", teams: "Matchday 3 Fixtures", time: "Today", category: "ucl" },
-            { league: "UEFA Europa League", teams: "Beşiktaş vs Crystal Palace", time: "Tomorrow", category: "bjk-euro" },
-            { league: "UEFA Nations League", teams: "Türkiye vs Wales", time: "Upcoming", category: "national" }
+    <input type="text" id="search-input" class="search-bar" placeholder="Search team, competition, or city (e.g. Liverpool, Real Madrid, Derby)..." oninput="renderMatches()" />
+
+    <div class="tabs" id="tabs-bar">
+      <button class="tab active" data-cat="all" onclick="setCategory('all')">All Matches</button>
+      <button class="tab" data-cat="fb-foot" onclick="setCategory('fb-foot')">💛💙 FB Football</button>
+      <button class="tab" data-cat="fb-basket" onclick="setCategory('fb-basket')">🏀 FB Beko</button>
+      <button class="tab" data-cat="ucl" onclick="setCategory('ucl')">⭐ Champions League</button>
+      <button class="tab" data-cat="bjk" onclick="setCategory('bjk')">🦅 Beşiktaş (Europe)</button>
+      <button class="tab" data-cat="tur" onclick="setCategory('tur')">🇹🇷 Türkiye National</button>
+      <button class="tab" data-cat="custom" onclick="setCategory('custom')">📌 Custom</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="sub-bar">
+      <span id="match-count">Showing upcoming matches</span>
+      <button class="toggle-past" id="toggle-past-btn" onclick="togglePast()">Show Recent Results</button>
+    </div>
+    <div id="matches-list"></div>
+  </div>
+
+  <!-- Add Custom Match Modal -->
+  <div class="modal-backdrop" id="add-modal">
+    <div class="modal">
+      <h3>➕ Add Custom Match</h3>
+      <div class="form-group">
+        <label>Home vs Away Teams</label>
+        <input type="text" id="custom-teams" placeholder="e.g. Arsenal vs Chelsea" />
+      </div>
+      <div class="form-group">
+        <label>Competition / League</label>
+        <input type="text" id="custom-league" placeholder="e.g. Premier League" />
+      </div>
+      <div class="form-group">
+        <label>Date & Kick-off Time (Your Local Time)</label>
+        <input type="datetime-local" id="custom-time" />
+      </div>
+      <div class="form-group">
+        <label>Venue / Stadium (Optional)</label>
+        <input type="text" id="custom-venue" placeholder="e.g. Emirates Stadium, London" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-accent" onclick="saveCustomMatch()">Save Match</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Verified 2026-27 Fixtures (ISO UTC timestamps)
+    const BASE_MATCHES = [
+      // RECENT RESULTS (Oct 17 - Oct 20, 2026)
+      { id: "r1", cats: ["fb-foot"], sport: "⚽", league: "Trendyol Süper Lig • Wk 8", home: "Fenerbahçe SK", away: "Alanyaspor", iso: "2026-10-17T16:00:00Z", venue: "Şükrü Saracoğlu, Istanbul", score: "3 - 0" },
+      { id: "r2", cats: ["fb-basket"], sport: "🏀", league: "Basketbol Süper Ligi • Rd 4", home: "Fenerbahçe Beko", away: "Petkim Spor", iso: "2026-10-18T12:30:00Z", venue: "Ülker Sports Arena, Istanbul", score: "77 - 82" },
+      { id: "r3", cats: ["fb-foot", "ucl"], sport: "⚽", league: "UEFA Champions League • MD 3", home: "Fenerbahçe SK", away: "SK Slavia Prague", iso: "2026-10-20T16:45:00Z", venue: "Şükrü Saracoğlu, Istanbul", score: "2 - 2" },
+      { id: "r4", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 3", home: "Sabah FK", away: "Borussia Dortmund", iso: "2026-10-20T16:45:00Z", venue: "Baku Stadium, Baku", score: "1 - 2" },
+      { id: "r5", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 3", home: "Paris Saint-Germain", away: "FC Barcelona", iso: "2026-10-20T19:00:00Z", venue: "Parc des Princes, Paris", score: "4 - 2" },
+      { id: "r6", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 3", home: "Liverpool F.C.", away: "Villarreal CF", iso: "2026-10-20T19:00:00Z", venue: "Anfield, Liverpool", score: "4 - 3" },
+      { id: "r7", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 3", home: "Manchester City", away: "AEK Athens", iso: "2026-10-20T19:00:00Z", venue: "Etihad Stadium, Manchester", score: "5 - 1" },
+      { id: "r8", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 3", home: "VfB Stuttgart", away: "Atlético Madrid", iso: "2026-10-20T19:00:00Z", venue: "MHP Arena, Stuttgart", score: "1 - 1" },
+      { id: "r9", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 3", home: "SSC Napoli", away: "FK Bodø/Glimt", iso: "2026-10-20T19:00:00Z", venue: "Stadio Diego Armando Maradona, Naples", score: "4 - 3" },
+      { id: "r10", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 3", home: "AS Roma", away: "ŠK Slovan Bratislava", iso: "2026-10-20T19:00:00Z", venue: "Stadio Olimpico, Rome", score: "4 - 0" },
+      { id: "r11", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 3", home: "FC Porto", away: "PSV Eindhoven", iso: "2026-10-20T19:00:00Z", venue: "Estádio do Dragão, Porto", score: "0 - 1" },
+
+      // TODAY: WEDNESDAY, OCT 21, 2026 — UEFA CHAMPIONS LEAGUE MD 3
+      { id: "u1", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 3", home: "Como 1907", away: "Manchester United", iso: "2026-10-21T16:45:00Z", venue: "Stadio Giuseppe Sinigaglia, Como" },
+      { id: "u2", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 3", home: "LOSC Lille", away: "Galatasaray S.K.", iso: "2026-10-21T16:45:00Z", venue: "Decathlon Arena, Lille" },
+      { id: "u3", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 3", home: "FC Bayern Munich", away: "Arsenal F.C.", iso: "2026-10-21T19:00:00Z", venue: "Allianz Arena, Munich" },
+      { id: "u4", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 3", home: "Real Madrid", away: "RB Leipzig", iso: "2026-10-21T19:00:00Z", venue: "Santiago Bernabéu, Madrid" },
+      { id: "u5", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 3", home: "Inter Milan", away: "FC Shakhtar Donetsk", iso: "2026-10-21T19:00:00Z", venue: "San Siro, Milan" },
+      { id: "u6", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 3", home: "Aston Villa F.C.", away: "Viking FK", iso: "2026-10-21T19:00:00Z", venue: "Villa Park, Birmingham" },
+      { id: "u7", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 3", home: "Sporting CP", away: "LASK", iso: "2026-10-21T19:00:00Z", venue: "Estádio José Alvalade, Lisbon" },
+      { id: "u8", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 3", home: "Real Betis", away: "Feyenoord", iso: "2026-10-21T19:00:00Z", venue: "Estadio de La Cartuja, Seville" },
+      { id: "u9", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 3", home: "Club Brugge KV", away: "RC Lens", iso: "2026-10-21T19:00:00Z", venue: "Jan Breydel Stadium, Bruges" },
+
+      // TOMORROW & THIS WEEK (OCT 22 - OCT 31, 2026)
+      { id: "b1", cats: ["bjk"], sport: "⚽", league: "UEFA Europa League • MD 3", home: "Beşiktaş J.K.", away: "Crystal Palace F.C.", iso: "2026-10-22T19:00:00Z", venue: "Tüpraş Stadium, Istanbul" },
+      { id: "fbb1", cats: ["fb-basket"], sport: "🏀", league: "EuroLeague • Round 7", home: "Olympiacos B.C.", away: "Fenerbahçe Beko", iso: "2026-10-23T18:15:00Z", venue: "SUNEL Arena, Athens" },
+      { id: "fbb2", cats: ["fb-basket"], sport: "🏀", league: "Basketbol Süper Ligi • Rd 5", home: "Karşıyaka", away: "Fenerbahçe Beko", iso: "2026-10-25T12:30:00Z", venue: "M.K. Atatürk Spor Salonu, İzmir" },
+      { id: "fbf1", cats: ["fb-foot"], sport: "⚽", league: "Trendyol Süper Lig • Wk 9 (Derby)", home: "Galatasaray S.K.", away: "Fenerbahçe SK", iso: "2026-10-26T18:30:00Z", venue: "RAMS Park, Istanbul" },
+      { id: "fbb3", cats: ["fb-basket"], sport: "🏀", league: "EuroLeague • Round 8", home: "Valencia Basket", away: "Fenerbahçe Beko", iso: "2026-10-27T19:30:00Z", venue: "Roig Arena, Valencia" },
+      { id: "fbb4", cats: ["fb-basket"], sport: "🏀", league: "EuroLeague • Round 9", home: "Real Madrid", away: "Fenerbahçe Beko", iso: "2026-10-29T19:45:00Z", venue: "Movistar Arena, Madrid" },
+      { id: "fbb5", cats: ["fb-basket"], sport: "🏀", league: "Basketbol Süper Ligi • Rd 6", home: "Fenerbahçe Beko", away: "Tofaş", iso: "2026-10-30T16:00:00Z", venue: "Ülker Sports Arena, Istanbul" },
+      { id: "fbf2", cats: ["fb-foot"], sport: "⚽", league: "Trendyol Süper Lig • Wk 10", home: "Fenerbahçe SK", away: "Göztepe S.K.", iso: "2026-10-31T16:00:00Z", venue: "Şükrü Saracoğlu, Istanbul" },
+
+      // NOVEMBER 2026 — CHAMPIONS LEAGUE MD 4 (NOV 3 & NOV 4)
+      { id: "u10", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 4", home: "Galatasaray S.K.", away: "VfB Stuttgart", iso: "2026-11-03T17:45:00Z", venue: "RAMS Park, Istanbul" },
+      { id: "u11", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 4", home: "FC Shakhtar Donetsk", away: "Sporting CP", iso: "2026-11-03T17:45:00Z", venue: "Stamford Bridge, London" },
+      { id: "u12", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 4", home: "FC Barcelona", away: "Aston Villa F.C.", iso: "2026-11-03T20:00:00Z", venue: "Spotify Camp Nou, Barcelona" },
+      { id: "u13", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 4", home: "Atlético Madrid", away: "FC Bayern Munich", iso: "2026-11-03T20:00:00Z", venue: "Metropolitano, Madrid" },
+      { id: "u14", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 4", home: "Manchester United", away: "AS Roma", iso: "2026-11-03T20:00:00Z", venue: "Old Trafford, Manchester" },
+      { id: "u15", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 4", home: "Villarreal CF", away: "Paris Saint-Germain", iso: "2026-11-03T20:00:00Z", venue: "Estadio de la Cerámica, Vila-real" },
+      { id: "u16", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 4", home: "Feyenoord", away: "Inter Milan", iso: "2026-11-03T20:00:00Z", venue: "De Kuip, Rotterdam" },
+      { id: "u17", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 4", home: "FK Bodø/Glimt", away: "LOSC Lille", iso: "2026-11-03T20:00:00Z", venue: "Aspmyra Stadion, Bodø" },
+      { id: "u18", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 4", home: "LASK", away: "ŠK Slovan Bratislava", iso: "2026-11-03T20:00:00Z", venue: "Raiffeisen Arena, Linz" },
+
+      { id: "fbf3", cats: ["fb-foot", "ucl"], sport: "⚽", league: "UEFA Champions League • MD 4", home: "Fenerbahçe SK", away: "Liverpool F.C.", iso: "2026-11-04T17:45:00Z", venue: "Şükrü Saracoğlu, Istanbul" },
+      { id: "u19", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 4", home: "AEK Athens", away: "Real Madrid", iso: "2026-11-04T17:45:00Z", venue: "ALLWYN Arena, Athens" },
+      { id: "u20", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 4", home: "RB Leipzig", away: "Manchester City", iso: "2026-11-04T20:00:00Z", venue: "Red Bull Arena, Leipzig" },
+      { id: "u21", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 4", home: "SK Slavia Prague", away: "Arsenal F.C.", iso: "2026-11-04T20:00:00Z", venue: "Fortuna Arena, Prague" },
+      { id: "u22", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 4", home: "Borussia Dortmund", away: "Real Betis", iso: "2026-11-04T20:00:00Z", venue: "Signal Iduna Park, Dortmund" },
+      { id: "u23", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 4", home: "FC Porto", away: "SSC Napoli", iso: "2026-11-04T20:00:00Z", venue: "Estádio do Dragão, Porto" },
+      { id: "u24", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 4", home: "PSV Eindhoven", away: "Club Brugge KV", iso: "2026-11-04T20:00:00Z", venue: "Philips Stadium, Eindhoven" },
+      { id: "u25", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 4", home: "RC Lens", away: "Como 1907", iso: "2026-11-04T20:00:00Z", venue: "Stade Bollaert-Delelis, Lens" },
+      { id: "u26", cats: ["ucl"], sport: "⚽", league: "UEFA Champions League • MD 4", home: "Viking FK", away: "Sabah FK", iso: "2026-11-04T20:00:00Z", venue: "Lyse Arena, Stavanger" },
+
+      // REST OF NOVEMBER & DECEMBER 2026
+      { id: "fbb6", cats: ["fb-basket"], sport: "🏀", league: "EuroLeague • Round 10", home: "Fenerbahçe Beko", away: "Saski Baskonia", iso: "2026-11-05T18:00:00Z", venue: "Ülker Sports Arena, Istanbul" },
+      { id: "b2", cats: ["bjk"], sport: "⚽", league: "UEFA Europa League • MD 4", home: "Celtic F.C.", away: "Beşiktaş J.K.", iso: "2026-11-05T20:00:00Z", venue: "Celtic Park, Glasgow" },
+      { id: "fbb7", cats: ["fb-basket"], sport: "🏀", league: "Basketbol Süper Ligi • Rd 7", home: "Bursaspor Basketbol", away: "Fenerbahçe Beko", iso: "2026-11-08T12:00:00Z", venue: "Tofaş Spor Salonu, Bursa" },
+      { id: "fbf4", cats: ["fb-foot"], sport: "⚽", league: "Trendyol Süper Lig • Wk 11", home: "Çorum FK", away: "Fenerbahçe SK", iso: "2026-11-08T13:00:00Z", venue: "Çorum City Stadium" },
+      { id: "fbb8", cats: ["fb-basket"], sport: "🏀", league: "EuroLeague • Round 11", home: "Paris Basketball", away: "Fenerbahçe Beko", iso: "2026-11-11T19:45:00Z", venue: "Adidas Arena, Paris" },
+      { id: "tur1", cats: ["tur"], sport: "⚽", league: "UEFA Nations League • Group A1", home: "Türkiye", away: "Belgium", iso: "2026-11-12T17:00:00Z", venue: "Gürsel Aksel Stadyumu, İzmir" },
+      { id: "fbb9", cats: ["fb-basket"], sport: "🏀", league: "Basketbol Süper Ligi • Rd 8", home: "Fenerbahçe Beko", away: "Anadolu Efes", iso: "2026-11-13T12:00:00Z", venue: "Ülker Sports Arena, Istanbul" },
+      { id: "tur2", cats: ["tur"], sport: "⚽", league: "UEFA Nations League • Group A1", home: "France", away: "Türkiye", iso: "2026-11-15T19:45:00Z", venue: "Matmut Atlantique, Bordeaux" },
+      { id: "fbb10", cats: ["fb-basket"], sport: "🏀", league: "EuroLeague • Round 12", home: "Fenerbahçe Beko", away: "LDLC ASVEL", iso: "2026-11-17T18:00:00Z", venue: "Ülker Sports Arena, Istanbul" },
+      { id: "fbb11", cats: ["fb-basket"], sport: "🏀", league: "EuroLeague • Round 13", home: "Olimpia Milano", away: "Fenerbahçe Beko", iso: "2026-11-19T19:30:00Z", venue: "Unipol Forum, Milan" },
+      { id: "fbb12", cats: ["fb-basket"], sport: "🏀", league: "Basketbol Süper Ligi • Rd 9", home: "Beşiktaş Basketbol", away: "Fenerbahçe Beko", iso: "2026-11-20T12:00:00Z", venue: "Istanbul" },
+      { id: "fbf5", cats: ["fb-foot"], sport: "⚽", league: "Trendyol Süper Lig • Wk 12", home: "Kocaelispor", away: "Fenerbahçe SK", iso: "2026-11-21T16:00:00Z", venue: "Kocaeli Stadyumu" },
+      { id: "fbb13", cats: ["fb-basket"], sport: "🏀", league: "EuroLeague • Round 14", home: "FC Barcelona Bàsquet", away: "Fenerbahçe Beko", iso: "2026-11-24T20:00:00Z", venue: "Palau Blaugrana, Barcelona" },
+      { id: "fbf6", cats: ["fb-foot", "ucl"], sport: "⚽", league: "UEFA Champions League • MD 5", home: "FC Shakhtar Donetsk", away: "Fenerbahçe SK", iso: "2026-11-25T20:00:00Z", venue: "Stamford Bridge, London" },
+      { id: "b3", cats: ["bjk"], sport: "⚽", league: "UEFA Europa League • MD 5", home: "Beşiktaş J.K.", away: "Hapoel Be'er Sheva", iso: "2026-11-26T17:45:00Z", venue: "Tüpraş Stadium, Istanbul" },
+      { id: "tur3", cats: ["tur"], sport: "🏀", league: "FIBA World Cup 2027 Qualifiers", home: "Italy", away: "Türkiye (12 Dev Adam)", iso: "2026-11-26T19:00:00Z", venue: "Italy" },
+      { id: "tur4", cats: ["tur"], sport: "🏀", league: "FIBA World Cup 2027 Qualifiers", home: "Türkiye (12 Dev Adam)", away: "Iceland", iso: "2026-11-29T16:00:00Z", venue: "Istanbul" },
+      { id: "fbf7", cats: ["fb-foot"], sport: "⚽", league: "Trendyol Süper Lig • Wk 13", home: "Fenerbahçe SK", away: "Erzurumspor F.K.", iso: "2026-11-29T16:00:00Z", venue: "Şükrü Saracoğlu, Istanbul" },
+
+      // DECEMBER 2026 HIGHLIGHTS
+      { id: "fbb14", cats: ["fb-basket"], sport: "🏀", league: "EuroLeague • Round 15", home: "Fenerbahçe Beko", away: "Crvena Zvezda", iso: "2026-12-03T17:45:00Z", venue: "Ülker Sports Arena, Istanbul" },
+      { id: "fbf8", cats: ["fb-foot"], sport: "⚽", league: "Trendyol Süper Lig • Wk 14", home: "İstanbul Başakşehir", away: "Fenerbahçe SK", iso: "2026-12-05T16:00:00Z", venue: "Fatih Terim Stadium, Istanbul" },
+      { id: "fbf9", cats: ["fb-foot", "ucl"], sport: "⚽", league: "UEFA Champions League • MD 6", home: "LASK", away: "Fenerbahçe SK", iso: "2026-12-09T20:00:00Z", venue: "Raiffeisen Arena, Linz" },
+      { id: "fbb15", cats: ["fb-basket"], sport: "🏀", league: "EuroLeague • Round 16", home: "Fenerbahçe Beko", away: "Anadolu Efes", iso: "2026-12-10T17:45:00Z", venue: "Ülker Sports Arena, Istanbul" },
+      { id: "b4", cats: ["bjk"], sport: "⚽", league: "UEFA Europa League • MD 6", home: "Bayer 04 Leverkusen", away: "Beşiktaş J.K.", iso: "2026-12-10T20:00:00Z", venue: "BayArena, Leverkusen" },
+      { id: "fbf10", cats: ["fb-foot"], sport: "⚽", league: "Trendyol Süper Lig • Wk 15", home: "Fenerbahçe SK", away: "Trabzonspor", iso: "2026-12-13T16:00:00Z", venue: "Şükrü Saracoğlu, Istanbul" }
+    ];
+
+    let activeCat = "all";
+    let showPast = false;
+
+    function getCustomMatches() {
+      try {
+        return JSON.parse(localStorage.getItem("custom_matches_v1") || "[]");
+      } catch (e) { return []; }
+    }
+
+    function getAllMatches() {
+      return [...BASE_MATCHES, ...getCustomMatches()].sort((a, b) => new Date(a.iso) - new Date(b.iso));
+    }
+
+    function setCategory(cat) {
+      activeCat = cat;
+      document.querySelectorAll(".tab").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.cat === cat);
+      });
+      renderMatches();
+    }
+
+    function togglePast() {
+      showPast = !showPast;
+      document.getElementById("toggle-past-btn").textContent = showPast ? "Hide Past Results" : "Show Recent Results";
+      renderMatches();
+    }
+
+    function formatDateTime(isoStr, tz) {
+      const date = new Date(isoStr);
+      const optsDate = { weekday: "short", month: "short", day: "numeric", year: "numeric" };
+      const optsTime = { hour: "2-digit", minute: "2-digit", hour12: false };
+      if (tz !== "local") {
+        optsDate.timeZone = tz;
+        optsTime.timeZone = tz;
+      }
+      const datePart = new Intl.DateTimeFormat("en-GB", optsDate).format(date);
+      const timePart = new Intl.DateTimeFormat("en-GB", optsTime).format(date);
+      return { datePart, timePart };
+    }
+
+    function getCountdownText(isoStr, score) {
+      const now = new Date();
+      const start = new Date(isoStr);
+      const diffMs = start - now;
+      const diffMins = Math.floor(diffMs / 60000);
+
+      if (diffMs < -125 * 60000) {
+        return { text: score ? `Final (${score})` : "Finished", cls: "past" };
+      }
+      if (diffMs <= 0 && diffMs >= -125 * 60000) {
+        const elapsed = Math.abs(diffMins);
+        return { text: `🔴 LIVE (${elapsed}')`, cls: "live" };
+      }
+      const days = Math.floor(diffMins / 1440);
+      const hours = Math.floor((diffMins % 1440) / 60);
+      const mins = diffMins % 60;
+      if (days > 0) return { text: `In ${days}d ${hours}h`, cls: "" };
+      if (hours > 0) return { text: `In ${hours}h ${mins}m`, cls: "" };
+      return { text: `Starts in ${mins}m!`, cls: "live" };
+    }
+
+    function renderMatches() {
+      const tz = document.getElementById("tz-select").value;
+      const query = document.getElementById("search-input").value.trim().toLowerCase();
+      const now = new Date();
+      const listEl = document.getElementById("matches-list");
+
+      const filtered = getAllMatches().filter(m => {
+        const isPast = (new Date(m.iso) - now) < -125 * 60000;
+        if (!showPast && isPast) return false;
+        if (activeCat !== "all" && !m.cats.includes(activeCat)) return false;
+        if (query) {
+          const hay = `${m.home} ${m.away} ${m.league} ${m.venue || ""}`.toLowerCase();
+          if (!hay.includes(query)) return false;
+        }
+        return true;
+      });
+
+      document.getElementById("match-count").textContent = `${filtered.length} match${filtered.length === 1 ? "" : "es"} shown`;
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<div class="empty-state">No matches found for this filter.</div>`;
+        return;
+      }
+
+      let html = "";
+      let lastDateHeader = "";
+
+      filtered.forEach(m => {
+        const { datePart, timePart } = formatDateTime(m.iso, tz);
+        if (datePart !== lastDateHeader) {
+          lastDateHeader = datePart;
+          html += `<div class="date-header">📅 ${datePart}</div>`;
+        }
+        const cd = getCountdownText(m.iso, m.score);
+        const primaryCat = m.cats[0] || "custom";
+        const isCustom = m.cats.includes("custom");
+
+        html += `
+          <div class="match-card cat-${primaryCat}">
+            <div class="card-top">
+              <span class="badge">${m.sport || "⚽"} ${m.league}</span>
+              <span class="countdown ${cd.cls}">${cd.text}</span>
+            </div>
+            <div class="teams-row">
+              <div class="teams-names">${m.home} <span style="color:#6b7280;font-weight:400;">vs</span> ${m.away}</div>
+              ${m.score ? `<div class="score-box">${m.score}</div>` : ""}
+            </div>
+            <div class="card-bottom">
+              <div>
+                <span class="datetime-text">🕒 ${timePart}</span>
+                <span style="margin-left:8px;">🏟️ ${m.venue || "TBA"}</span>
+              </div>
+              <div class="card-actions">
+                <button class="icon-btn" onclick="downloadICS('${m.home.replace(/'/g, "")} vs ${m.away.replace(/'/g, "")}', '${m.league.replace(/'/g, "")}', '${m.iso}', '${(m.venue || "").replace(/'/g, "")}')">📅 Cal</button>
+                ${isCustom ? `<button class="icon-btn" onclick="deleteCustom('${m.id}')">🗑️</button>` : ""}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      listEl.innerHTML = html;
+    }
+
+    function downloadICS(title, league, iso, venue) {
+      const start = new Date(iso);
+      const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+      const fmt = d => d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+      const ics = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "BEGIN:VEVENT",
+        `DTSTART:${fmt(start)}`,
+        `DTEND:${fmt(end)}`,
+        `SUMMARY:${title} (${league})`,
+        `LOCATION:${venue}`,
+        "END:VEVENT",
+        "END:VCALENDAR"
+      ].join("\r\n");
+      const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `${title.replace(/\s+/g, "_")}.ics`;
+      link.click();
+    }
+
+    function openModal() { document.getElementById("add-modal").classList.add("open"); }
+    function closeModal() { document.getElementById("add-modal").classList.remove("open"); }
+
+    function saveCustomMatch() {
+      const teams = document.getElementById("custom-teams").value.trim();
+      const league = document.getElementById("custom-league").value.trim() || "Custom Match";
+      const timeVal = document.getElementById("custom-time").value;
+      const venue = document.getElementById("custom-venue").value.trim() || "Custom Venue";
+
+      if (!teams || !timeVal) {
+        alert("Please enter both teams and the date/time.");
+        return;
+      }
+      const parts = teams.split(/\s+vs\.?\s+|\s+-\s+/i);
+      const home = parts[0] || teams;
+      const away = parts[1] || "Opponent";
+
+      const customList = getCustomMatches();
+      customList.push({
+        id: "cust_" + Date.now(),
+        cats: ["custom"],
+        sport: "⭐",
+        league,
+        home,
+        away,
+        iso: new Date(timeVal).toISOString(),
+        venue
+      });
+      localStorage.setItem("custom_matches_v1", JSON.stringify(customList));
+      closeModal();
+      renderMatches();
+    }
+
+    function deleteCustom(id) {
+      const updated = getCustomMatches().filter(m => m.id !== id);
+      localStorage.setItem("custom_matches_v1", JSON.stringify(updated));
+      renderMatches();
+    }
+
+    async function syncLiveScores() {
+      const btn = document.getElementById("sync-btn");
+      btn.textContent = "⏳...";
+      try {
+        const urls = [
+          "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/scoreboard",
+          "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.europa/scoreboard",
+          "https://site.api.espn.com/apis/site/v2/sports/soccer/tur.1/scoreboard"
         ];
+        for (const url of urls) {
+          const res = await fetch(url);
+          if (!res.ok) continue;
+          const data = await res.json();
+          (data.events || []).forEach(ev => {
+            const comp = ev.competitions && ev.competitions[0];
+            if (!comp) return;
+            const competitors = comp.competitors || [];
+            const h = competitors.find(c => c.homeAway === "home");
+            const a = competitors.find(c => c.homeAway === "away");
+            if (!h || !a) return;
+            const hName = h.team.displayName.toLowerCase();
+            const aName = a.team.displayName.toLowerCase();
+            BASE_MATCHES.forEach(m => {
+              if (hName.includes(m.home.toLowerCase().split(" ")[0]) || aName.includes(m.away.toLowerCase().split(" ")[0])) {
+                if (comp.status && comp.status.type && comp.status.type.state !== "pre") {
+                  m.score = `${h.score} - ${a.score}`;
+                }
+              }
+            });
+          });
+        }
+        btn.textContent = "✅ Synced";
+        setTimeout(() => { btn.textContent = "🔄 Live"; }, 2500);
+        renderMatches();
+      } catch (e) {
+        btn.textContent = "🔄 Live";
+      }
+    }
 
-        const container = document.getElementById('tracker-container');
-        
-        matches.forEach(match => {
-            const card = document.createElement('div');
-            card.className = 'match-card';
-            card.innerHTML = `
-                <div class="league">${match.league}</div>
-                <div class="teams">${match.teams}</div>
-                <div class="time">🕒 ${match.time}</div>
-            `;
-            container.appendChild(card);
-        });
-    </script>
-
+    document.getElementById("tz-select").addEventListener("change", renderMatches);
+    renderMatches();
+    setInterval(renderMatches, 30000);
+  </script>
 </body>
 </html>
